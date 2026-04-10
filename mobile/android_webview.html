@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#020b18" />
+  <title>SignBridge AI — Mobile</title>
+  <link rel="stylesheet" href="../frontend/style.css" />
+  <style>
+    /* ── Mobile-first overrides ── */
+    body { overscroll-behavior: none; }
+
+    .mobile-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--glass-bg);
+      border-bottom: 1px solid var(--glass-border);
+      padding: 12px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .mobile-brand {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .mobile-brand .accent { color: var(--neon-blue); }
+
+    .mobile-tabs {
+      display: flex;
+      gap: 0;
+      background: var(--navy-800);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      margin: 12px 16px;
+    }
+
+    .mobile-tab {
+      flex: 1;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      padding: 10px 0;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .mobile-tab.active {
+      background: var(--neon-blue);
+      color: var(--navy-950);
+    }
+
+    .mobile-panel {
+      padding: 0 16px 16px;
+      display: none;
+    }
+    .mobile-panel.active { display: block; }
+
+    /* Camera */
+    .mobile-cam {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 3/4;
+      background: var(--navy-900);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    #m-video, #m-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+    #m-canvas { pointer-events: none; }
+
+    .m-overlay {
+      position: absolute;
+      bottom: 10px; left: 10px; right: 10px;
+      background: rgba(2,11,24,0.85);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--neon-blue);
+      text-align: center;
+      letter-spacing: 1px;
+      backdrop-filter: blur(6px);
+    }
+
+    /* Avatar */
+    .mobile-avatar {
+      width: 100%;
+      aspect-ratio: 1/1;
+      background: var(--navy-900);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    #m-avatar-canvas {
+      width: 100%; height: 100%;
+      display: block;
+    }
+
+    /* Touch-optimised buttons */
+    .m-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 14px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: var(--transition);
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      margin-bottom: 10px;
+      min-height: 52px;
+    }
+    .m-btn-blue {
+      background: var(--neon-blue);
+      color: var(--navy-950);
+      box-shadow: 0 0 14px rgba(0,212,255,0.3);
+    }
+    .m-btn-blue:active { opacity: 0.8; }
+
+    .m-btn-ghost {
+      background: var(--navy-700);
+      color: var(--text-secondary);
+      border: 1px solid var(--glass-border);
+    }
+
+    .m-mic-btn {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      font-size: 1.8rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--navy-700);
+      border: 2px solid var(--glass-border);
+      cursor: pointer;
+      margin: 0 auto 14px;
+      transition: var(--transition);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .m-mic-btn.listening {
+      border-color: var(--neon-red);
+      background: rgba(255,60,90,0.12);
+      animation: micPulse 1.5s ease-in-out infinite;
+    }
+
+    .m-output {
+      background: var(--navy-800);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      margin-bottom: 12px;
+      min-height: 52px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--neon-blue);
+      word-break: break-word;
+    }
+
+    .m-text-input {
+      width: 100%;
+      background: var(--navy-800);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-size: 0.95rem;
+      padding: 12px 14px;
+      outline: none;
+      margin-bottom: 10px;
+    }
+    .m-text-input:focus { border-color: var(--neon-blue); }
+
+    .m-lang-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .m-lang-btn {
+      flex: 1;
+      padding: 10px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      background: var(--navy-700);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .m-lang-btn.active {
+      background: var(--neon-blue);
+      color: var(--navy-950);
+      border-color: var(--neon-blue);
+    }
+  </style>
+</head>
+<body>
+
+<div class="mobile-topbar">
+  <div class="mobile-brand">SignBridge <span class="accent">AI</span></div>
+  <div class="status-badges" style="gap:8px">
+    <span class="badge" id="m-badge-ai">
+      <span class="dot pulse" id="m-dot-ai"></span> AI
+    </span>
+  </div>
+</div>
+
+<!-- Tab switcher -->
+<div class="mobile-tabs">
+  <button class="mobile-tab active" id="tab-patient" onclick="switchTab('patient')">
+    🧑 Patient
+  </button>
+  <button class="mobile-tab" id="tab-doctor" onclick="switchTab('doctor')">
+    👨‍⚕️ Doctor
+  </button>
+</div>
+
+<!-- ── PATIENT PANEL ── -->
+<div class="mobile-panel active" id="panel-patient">
+
+  <div class="mobile-cam">
+    <video id="m-video" autoplay muted playsinline></video>
+    <canvas id="m-canvas"></canvas>
+    <div class="m-overlay" id="m-sign-label">Tap Start</div>
+  </div>
+
+  <button class="m-btn m-btn-blue" onclick="mStartCamera()" id="m-btn-start">
+    📷 Start Detection
+  </button>
+  <button class="m-btn m-btn-ghost" onclick="mStop()" id="m-btn-stop" style="display:none">
+    ⏹ Stop
+  </button>
+
+  <div class="m-output" id="m-detected">—</div>
+
+  <div class="m-lang-row">
+    <button class="m-lang-btn active" onclick="mSetLang('en', this)">EN</button>
+    <button class="m-lang-btn" onclick="mSetLang('ta', this)">TA</button>
+    <button class="m-lang-btn" onclick="mSetLang('hi', this)">HI</button>
+  </div>
+
+  <button class="m-btn m-btn-ghost" onclick="mSpeakLast()">🔊 Speak Detected Sign</button>
+
+</div>
+
+<!-- ── DOCTOR PANEL ── -->
+<div class="mobile-panel" id="panel-doctor">
+
+  <div class="mobile-avatar">
+    <canvas id="m-avatar-canvas"></canvas>
+  </div>
+
+  <div class="m-mic-btn" id="m-mic" onclick="mToggleMic()">🎤</div>
+
+  <div class="m-output" id="m-speech-out">Tap microphone to speak...</div>
+
+  <input type="text" class="m-text-input" id="m-text-in"
+    placeholder="Or type here..."
+    onkeydown="if(event.key==='Enter') mSubmitText()" />
+  <button class="m-btn m-btn-blue" onclick="mSubmitText()">▶ Send to Avatar</button>
+
+</div>
+
+<script src="../frontend/app.js"></script>
+<script src="../frontend/speech.js"></script>
+<script src="../frontend/avatar.js"></script>
+<script src="../frontend/assets/js/three.min.js"></script>
+
+<script>
+const API_BASE = "http://localhost:5000";
+let mLang = "en";
+let mStream = null;
+let mDetectTimer = null;
+let mListening = false;
+let mLastLabel = null;
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let mRecognition = null;
+
+// Init avatar
+window.addEventListener("DOMContentLoaded", () => {
+  if (window.avatarModule) avatarModule.init("m-avatar-canvas");
+  if (SpeechRecognition) {
+    mRecognition = new SpeechRecognition();
+    mRecognition.continuous = false;
+    mRecognition.interimResults = true;
+    mRecognition.onresult = (e) => {
+      let final = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) final += e.results[i][0].transcript;
+      }
+      if (final) { mSpeechDone(final); }
+    };
+    mRecognition.onend = () => {
+      mListening = false;
+      document.getElementById("m-mic").classList.remove("listening");
+    };
+  }
+  // Check API
+  fetch(`${API_BASE}/api/status`).then(r => r.json()).then(d => {
+    if (d.status === "ok") document.getElementById("m-dot-ai").classList.add("active");
+  }).catch(() => {});
+});
+
+function switchTab(tab) {
+  document.querySelectorAll(".mobile-panel").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".mobile-tab").forEach(t => t.classList.remove("active"));
+  document.getElementById("panel-" + tab).classList.add("active");
+  document.getElementById("tab-" + tab).classList.add("active");
+}
+
+async function mStartCamera() {
+  try {
+    mStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+    const v = document.getElementById("m-video");
+    v.srcObject = mStream;
+    await v.play();
+    const c = document.getElementById("m-canvas");
+    c.width = v.videoWidth; c.height = v.videoHeight;
+    document.getElementById("m-btn-start").style.display = "none";
+    document.getElementById("m-btn-stop").style.display = "flex";
+    mDetectTimer = setInterval(mDetect, 400);
+  } catch(e) {
+    alert("Camera error: " + e.message);
+  }
+}
+
+function mStop() {
+  clearInterval(mDetectTimer);
+  mStream?.getTracks().forEach(t => t.stop());
+  document.getElementById("m-video").srcObject = null;
+  document.getElementById("m-btn-start").style.display = "flex";
+  document.getElementById("m-btn-stop").style.display = "none";
+}
+
+async function mDetect() {
+  const v = document.getElementById("m-video");
+  if (!v || v.readyState < 2) return;
+  const tmp = document.createElement("canvas");
+  tmp.width = v.videoWidth; tmp.height = v.videoHeight;
+  tmp.getContext("2d").drawImage(v, 0, 0);
+  const b64 = tmp.toDataURL("image/jpeg", 0.65).split(",")[1];
+  try {
+    const res = await fetch(`${API_BASE}/api/detect`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ frame: b64 }),
+    });
+    const data = await res.json();
+    if (data.label && data.confidence >= 0.5) {
+      const label = data.label.replace(/_/g, " ");
+      document.getElementById("m-sign-label").textContent = label.toUpperCase();
+      document.getElementById("m-detected").textContent = label;
+      mLastLabel = data.label;
+    }
+  } catch(e) {}
+}
+
+async function mSpeakLast() {
+  if (!mLastLabel) return;
+  try {
+    const res = await fetch(`${API_BASE}/api/speech`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: mLastLabel.replace(/_/g, " "), lang: mLang }),
+    });
+    const blob = await res.blob();
+    new Audio(URL.createObjectURL(blob)).play();
+  } catch(e) {}
+}
+
+function mSetLang(lang, btn) {
+  mLang = lang;
+  document.querySelectorAll(".m-lang-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+}
+
+function mToggleMic() {
+  if (!mRecognition) { alert("Speech not supported"); return; }
+  if (mListening) { mRecognition.stop(); }
+  else {
+    mListening = true;
+    mRecognition.lang = { en: "en-US", ta: "ta-IN", hi: "hi-IN" }[mLang] || "en-US";
+    mRecognition.start();
+    document.getElementById("m-mic").classList.add("listening");
+    document.getElementById("m-speech-out").textContent = "Listening...";
+  }
+}
+
+async function mSpeechDone(text) {
+  document.getElementById("m-speech-out").textContent = text;
+  await mMapText(text);
+}
+
+async function mSubmitText() {
+  const v = document.getElementById("m-text-in").value.trim();
+  if (!v) return;
+  document.getElementById("m-text-in").value = "";
+  document.getElementById("m-speech-out").textContent = v;
+  await mMapText(v);
+}
+
+async function mMapText(text) {
+  try {
+    const res = await fetch(`${API_BASE}/api/mapper`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
+    const data = await res.json();
+    if (data.tokens && window.avatarModule && data.sequences) {
+      await avatarModule.playSequence(data.tokens, data.sequences);
+    }
+  } catch(e) {}
+}
+</script>
+</body>
+</html>

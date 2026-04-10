@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SignBridge AI — Real-Time ISL Communication</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Three.js r128 — local copy for offline use (run: python scripts/download_assets.py) -->
+  <script src="assets/js/three.min.js"></script>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════ HEADER ═══════════════ -->
+<header class="topbar">
+  <div class="topbar-brand">
+    <span class="brand-icon">🤝</span>
+    <span class="brand-name">SignBridge <span class="accent">AI</span></span>
+    <span class="brand-tagline">Real-Time ISL Medical Communication</span>
+  </div>
+  <div class="topbar-controls">
+    <!-- Language selector -->
+    <div class="lang-selector">
+      <button class="lang-btn active" data-lang="en" onclick="setLanguage('en')">EN</button>
+      <button class="lang-btn" data-lang="ta" onclick="setLanguage('ta')">TA</button>
+      <button class="lang-btn" data-lang="hi" onclick="setLanguage('hi')">HI</button>
+    </div>
+    <!-- Status indicators -->
+    <div class="status-badges">
+      <span class="badge" id="badge-ai">
+        <span class="dot pulse" id="dot-ai"></span> AI ACTIVE
+      </span>
+      <span class="badge" id="badge-detect">
+        <span class="dot" id="dot-detect"></span> DETECTING
+      </span>
+      <span class="badge" id="badge-listen">
+        <span class="dot" id="dot-listen"></span> LISTENING
+      </span>
+    </div>
+    <a href="calibration.html" class="btn-calibrate">⚙ Calibrate</a>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════════ ERROR BANNER ════════════ -->
+<div id="error-banner" class="error-banner hidden">
+  <span id="error-message"></span>
+  <button onclick="dismissError()">✕</button>
+</div>
+
+<!-- ═══════════════════════════════════════════ MAIN LAYOUT ════════════ -->
+<main class="split-layout">
+
+  <!-- ─────────────────────────────── LEFT: Patient Panel ─────────────── -->
+  <section class="panel patient-panel" id="patient-panel">
+    <div class="panel-header">
+      <h2>🧑‍🦯 Patient</h2>
+      <span class="panel-subtitle">Sign language → Text & Speech</span>
+    </div>
+
+    <!-- Camera view -->
+    <div class="camera-container" id="camera-container">
+      <video id="webcam" autoplay muted playsinline></video>
+      <canvas id="landmark-canvas"></canvas>
+      <!-- Skeleton overlay label -->
+      <div class="camera-overlay">
+        <span class="overlay-badge" id="detection-label">Waiting...</span>
+        <div class="confidence-track">
+          <div class="confidence-bar" id="confidence-bar"></div>
+        </div>
+        <span class="confidence-text" id="confidence-text">0%</span>
+      </div>
+      <!-- Scanning animation -->
+      <div class="scan-line" id="scan-line"></div>
+    </div>
+
+    <!-- Controls -->
+    <div class="control-row">
+      <button class="btn-primary" id="btn-start-camera" onclick="startCamera()">
+        📷 Start Camera
+      </button>
+      <button class="btn-secondary" id="btn-stop-detect" onclick="stopDetection()" disabled>
+        ⏹ Stop
+      </button>
+      <button class="btn-accent" id="btn-speak-detect" onclick="speakLastDetection()">
+        🔊 Speak
+      </button>
+    </div>
+
+    <!-- Detection output -->
+    <div class="output-box" id="detection-output">
+      <div class="output-label">Detected Sign</div>
+      <div class="typewriter" id="detected-text">—</div>
+    </div>
+
+    <!-- Conversation history -->
+    <div class="chat-box" id="patient-chat">
+      <div class="chat-header">📋 Patient History</div>
+      <div class="chat-messages" id="patient-messages"></div>
+    </div>
+  </section>
+
+  <!-- ─────────────────── CENTER DIVIDER ──────────────────────────────── -->
+  <div class="divider">
+    <div class="divider-line"></div>
+    <div class="divider-icon">⇄</div>
+    <div class="divider-line"></div>
+  </div>
+
+  <!-- ─────────────────────────────── RIGHT: Doctor Panel ─────────────── -->
+  <section class="panel doctor-panel" id="doctor-panel">
+    <div class="panel-header">
+      <h2>👨‍⚕️ Doctor</h2>
+      <span class="panel-subtitle">Speech → ISL Avatar</span>
+    </div>
+
+    <!-- Avatar canvas -->
+    <div class="avatar-container" id="avatar-container">
+      <canvas id="avatar-canvas"></canvas>
+      <div class="avatar-overlay">
+        <span class="overlay-badge" id="avatar-sign-label">Ready</span>
+      </div>
+    </div>
+
+    <!-- Speech input -->
+    <div class="speech-row">
+      <button class="mic-btn" id="mic-btn" onclick="toggleMicrophone()">
+        <span class="mic-icon">🎤</span>
+        <span class="mic-label">TAP TO SPEAK</span>
+      </button>
+    </div>
+
+    <!-- Text input fallback -->
+    <div class="text-input-row">
+      <input
+        type="text"
+        id="doctor-text-input"
+        class="text-input"
+        placeholder="Or type here and press Enter..."
+        onkeydown="handleDoctorInput(event)"
+      />
+      <button class="btn-primary" onclick="submitDoctorText()">▶ Send</button>
+    </div>
+
+    <!-- Recognised speech display -->
+    <div class="output-box" id="speech-output">
+      <div class="output-label">Doctor's Message</div>
+      <div class="typewriter" id="speech-text">—</div>
+    </div>
+
+    <!-- Avatar playback controls -->
+    <div class="control-row">
+      <button class="btn-secondary" onclick="pauseAvatar()">⏸ Pause</button>
+      <button class="btn-secondary" onclick="resumeAvatar()">▶ Resume</button>
+      <button class="btn-secondary" onclick="replayAvatar()">↺ Replay</button>
+    </div>
+
+    <!-- Conversation history -->
+    <div class="chat-box" id="doctor-chat">
+      <div class="chat-header">📋 Doctor History</div>
+      <div class="chat-messages" id="doctor-messages"></div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ═══════════════════════════════════════════ LOADING OVERLAY ═════════ -->
+<div class="loading-overlay" id="loading-overlay">
+  <div class="loading-card">
+    <div class="spinner"></div>
+    <p id="loading-text">Initialising SignBridge AI...</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ MODULE 3 INFO ═══════ -->
+<section class="uscl-section">
+  <div class="uscl-card">
+    <h3>🌐 Module 3 — Universal Sign Concept Layer (USCL) <span class="badge-future">FUTURE</span></h3>
+    <p>
+      Architecture for cross-language sign translation:
+      <strong>ISL → USCL → ASL / BSL / JSL</strong>
+    </p>
+    <div class="uscl-pipeline">
+      <div class="uscl-node">ISL Sign<br/><small>pain</small></div>
+      <div class="uscl-arrow">→</div>
+      <div class="uscl-node accent">USCL ID<br/><small>USCL_001</small></div>
+      <div class="uscl-arrow">→</div>
+      <div class="uscl-node">ASL Sign<br/><small>asl_23</small></div>
+      <div class="uscl-arrow">→</div>
+      <div class="uscl-node">BSL Sign<br/><small>bsl_07</small></div>
+      <div class="uscl-arrow">→</div>
+      <div class="uscl-node">JSL Sign<br/><small>jsl_11</small></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════ SCRIPTS ══════════ -->
+<script src="app.js"></script>
+<script src="speech.js"></script>
+<script src="avatar.js"></script>
+
+<script>
+// ─────────────────────────────── Boot sequence ──────────────────────────────
+const API_BASE = window.location.origin.includes("file://")
+  ? "http://localhost:5000"
+  : window.location.origin;
+
+let currentLang = "en";
+
+function setLanguage(lang) {
+  currentLang = lang;
+  document.querySelectorAll(".lang-btn").forEach(b => b.classList.remove("active"));
+  document.querySelector(`[data-lang="${lang}"]`).classList.add("active");
+  if (window.speechModule) speechModule.setLang(lang);
+}
+
+function showError(msg) {
+  document.getElementById("error-message").textContent = msg;
+  document.getElementById("error-banner").classList.remove("hidden");
+}
+function dismissError() {
+  document.getElementById("error-banner").classList.add("hidden");
+}
+
+function setLoading(msg) {
+  document.getElementById("loading-text").textContent = msg || "Loading...";
+  document.getElementById("loading-overlay").classList.remove("hidden");
+}
+function hideLoading() {
+  document.getElementById("loading-overlay").classList.add("hidden");
+}
+
+async function checkAPIStatus() {
+  try {
+    const res = await fetch(`${API_BASE}/api/status`);
+    const data = await res.json();
+    if (data.status === "ok") {
+      document.getElementById("dot-ai").classList.add("active");
+      document.getElementById("badge-ai").classList.add("active");
+      return true;
+    }
+  } catch {
+    showError("Backend not reachable. Ensure run.py is running on port 5000.");
+  }
+  return false;
+}
+
+// Initialise app on page load
+window.addEventListener("DOMContentLoaded", async () => {
+  setLoading("Initialising SignBridge AI...");
+
+  // Check backend
+  await checkAPIStatus();
+
+  // Initialise avatar
+  if (window.avatarModule) {
+    avatarModule.init("avatar-canvas");
+  }
+
+  // Initialise speech module
+  if (window.speechModule) {
+    speechModule.init(API_BASE, currentLang);
+  }
+
+  hideLoading();
+});
+</script>
+</body>
+</html>
