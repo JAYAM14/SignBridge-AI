@@ -1,0 +1,100 @@
+[
+  {
+    "uscl_id": "USCL_001",
+    "concept": "pain",
+    "description": "Physical discomfort or hurt in any body part",
+    "category": "medical_symptom",
+    "severity_level": 3,
+    "synonyms": ["hurt", "ache", "hurts", "sore"],
+    "mappings": {
+      "isl": { "token": "pain", "keypoint_file": "pain.json", "hand": "right", "confidence": 1.0 },
+      "asl": { "token": "asl_pain_023", "reference": "ASL_SignBank_023", "hand": "both", "confidence": 0.95 },
+      "bsl": { "token": "bsl_pain_007", "reference": "BSL_Dict_007", "hand": "both", "confidence": 0.92 },
+      "jsl": { "token": "jsl_pain_011", "reference": "JSL_Dict_011", "hand": "right", "confidence": 0.88 }
+    }
+  },
+  {
+    "uscl_id": "USCL_002",
+    "concept": "help",
+    "description": "Request for assistance",
+    "category": "medical_action",
+    "severity_level": 4,
+    "synonyms": ["assist", "aid", "rescue"],
+    "mappings": {
+      "isl": { "token": "help", "keypoint_file": "help.json", "hand": "right", "confidence": 1.0 },
+      "asl": { "token": "asl_help_001", "reference": "ASL_SignBank_001", "hand": "both", "confidence": 0.97 },
+      "bsl": { "token": "bsl_help_001", "reference": "BSL_Dict_001", "hand": "both", "confidence": 0.95 },
+      "jsl": { "token": "jsl_help_001", "reference": "JSL_Dict_001", "hand": "both", "confidence": 0.91 }
+    }
+  },
+  {
+    "uscl_id": "USCL_003",
+    "concept": "emergency",
+    "description": "Life-threatening or critical situation requiring immediate attention",
+    "category": "emergency",
+    "severity_level": 5,
+    "synonyms": ["urgent", "critical", "danger"],
+    "mappings": {
+      "isl": { "token": "emergency", "keypoint_file": "emergency.json", "hand": "both", "confidence": 1.0 },
+      "asl": { "token": "asl_emergency_042", "reference": "ASL_SignBank_042", "hand": "both", "confidence": 0.93 },
+      "bsl": { "token": "bsl_emergency_019", "reference": "BSL_Dict_019", "hand": "both", "confidence": 0.90 },
+      "jsl": { "token": "jsl_emergency_028", "reference": "JSL_Dict_028", "hand": "both", "confidence": 0.87 }
+    }
+  },
+  {
+    "uscl_id": "USCL_004",
+    "concept": "water",
+    "description": "Need for water / thirst",
+    "category": "basic_need",
+    "severity_level": 2,
+    "synonyms": ["drink", "thirsty"],
+    "mappings": {
+      "isl": { "token": "water", "keypoint_file": "water.json", "hand": "right", "confidence": 1.0 },
+      "asl": { "token": "asl_water_155", "reference": "ASL_SignBank_155", "hand": "right", "confidence": 0.96 },
+      "bsl": { "token": "bsl_water_088", "reference": "BSL_Dict_088", "hand": "right", "confidence": 0.94 },
+      "jsl": { "token": "jsl_water_066", "reference": "JSL_Dict_066", "hand": "right", "confidence": 0.89 }
+    }
+  },
+  {
+    "uscl_id": "USCL_005",
+    "concept": "headache",
+    "description": "Pain or discomfort in the head",
+    "category": "medical_symptom",
+    "severity_level": 2,
+    "synonyms": ["head pain", "head ache"],
+    "mappings": {
+      "isl": { "token": "headache", "keypoint_file": "headache.json", "hand": "right", "confidence": 1.0 },
+      "asl": { "token": "asl_headache_061", "reference": "ASL_SignBank_061", "hand": "both", "confidence": 0.91 },
+      "bsl": { "token": "bsl_headache_034", "reference": "BSL_Dict_034", "hand": "both", "confidence": 0.89 },
+      "jsl": { "token": "jsl_headache_045", "reference": "JSL_Dict_045", "hand": "right", "confidence": 0.85 }
+    }
+  },
+  {
+    "uscl_id": "USCL_006",
+    "concept": "call_doctor",
+    "description": "Request to summon a doctor or nurse",
+    "category": "medical_action",
+    "severity_level": 4,
+    "synonyms": ["doctor", "nurse", "call nurse", "call doctor"],
+    "mappings": {
+      "isl": { "token": "call_doctor", "keypoint_file": "call_doctor.json", "hand": "right", "confidence": 1.0 },
+      "asl": { "token": "asl_doctor_012", "reference": "ASL_SignBank_012", "hand": "right", "confidence": 0.93 },
+      "bsl": { "token": "bsl_doctor_006", "reference": "BSL_Dict_006", "hand": "right", "confidence": 0.90 },
+      "jsl": { "token": "jsl_doctor_009", "reference": "JSL_Dict_009", "hand": "right", "confidence": 0.87 }
+    }
+  },
+  {
+    "uscl_id": "USCL_007",
+    "concept": "medicine",
+    "description": "Request for medication or drug",
+    "category": "basic_need",
+    "severity_level": 3,
+    "synonyms": ["medication", "pill", "drug"],
+    "mappings": {
+      "isl": { "token": "medicine", "keypoint_file": "medicine.json", "hand": "right", "confidence": 1.0 },
+      "asl": { "token": "asl_medicine_099", "reference": "ASL_SignBank_099", "hand": "both", "confidence": 0.92 },
+      "bsl": { "token": "bsl_medicine_055", "reference": "BSL_Dict_055", "hand": "both", "confidence": 0.90 },
+      "jsl": { "token": "jsl_medicine_072", "reference": "JSL_Dict_072", "hand": "both", "confidence": 0.86 }
+    }
+  }
+]

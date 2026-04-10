@@ -1,0 +1,42 @@
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Model artifacts
+model/signbridge_model.h5
+model/model.tflite
+model/label_encoder.pkl
+hand_landmark.tflite
+
+# Dataset
+dataset/raw/
+dataset/processed/
+dataset/signs/
+dataset/keypoints.csv
+
+# Audio cache
+backend/audio_cache/
+*.mp3
+*.wav
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

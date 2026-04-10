@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SignBridge AI — Calibration</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .calibration-wrapper {
+      max-width: 700px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+    .cal-step {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-bottom: 20px;
+      backdrop-filter: blur(10px);
+      transition: var(--transition);
+    }
+    .cal-step h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--neon-blue);
+      margin-bottom: 10px;
+    }
+    .cal-step p {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+    .progress-ring {
+      width: 80px;
+      height: 80px;
+      transform: rotate(-90deg);
+    }
+    .progress-ring circle {
+      fill: none;
+      stroke: var(--navy-700);
+      stroke-width: 6;
+    }
+    .progress-ring .progress {
+      stroke: var(--neon-blue);
+      stroke-dasharray: 226;
+      stroke-dashoffset: 226;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 0.3s ease;
+      filter: drop-shadow(0 0 4px rgba(0,212,255,0.5));
+    }
+    .cal-camera-wrap {
+      position: relative;
+      width: 100%;
+      max-width: 400px;
+      aspect-ratio: 4/3;
+      background: var(--navy-900);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    #cal-video, #cal-canvas {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+    #cal-canvas { pointer-events: none; }
+    .cal-timer {
+      position: absolute;
+      top: 10px; right: 14px;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--neon-blue);
+      text-shadow: 0 0 12px rgba(0,212,255,0.7);
+    }
+    .status-msg {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-top: 8px;
+    }
+    .status-msg.success { color: var(--neon-green); }
+    .status-msg.error   { color: var(--neon-red); }
+  </style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-brand">
+    <span class="brand-icon">🤝</span>
+    <span class="brand-name">SignBridge <span class="accent">AI</span></span>
+    <span class="brand-tagline">Hand Calibration</span>
+  </div>
+  <div class="topbar-controls">
+    <a href="index.html" class="btn-calibrate">← Back to Main</a>
+  </div>
+</header>
+
+<div class="calibration-wrapper">
+
+  <div class="cal-step">
+    <h3>Step 1 — Camera Setup</h3>
+    <p>
+      Position your hand in front of the camera in a relaxed, open-palm pose.
+      Keep your hand steady and centred in the frame for 30 seconds.
+      This helps SignBridge AI adapt to your specific hand size and position.
+    </p>
+    <button class="btn-primary" id="btn-start-cal" onclick="startCalibration()">
+      📷 Start Calibration
+    </button>
+  </div>
+
+  <div class="cal-step">
+    <h3>Step 2 — Hold Pose</h3>
+    <p>Hold your hand still. Keep fingers spread apart in a natural open-palm.</p>
+
+    <div class="cal-camera-wrap">
+      <video id="cal-video" autoplay muted playsinline></video>
+      <canvas id="cal-canvas"></canvas>
+      <div class="cal-timer" id="cal-timer">30</div>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:20px">
+      <svg class="progress-ring" viewBox="0 0 80 80">
+        <circle cx="40" cy="40" r="36"/>
+        <circle class="progress" cx="40" cy="40" r="36" id="progress-circle"/>
+      </svg>
+      <div>
+        <div class="status-msg" id="cal-status">Waiting to start...</div>
+        <div style="font-size:0.78rem; color:var(--text-muted); margin-top:4px" id="sample-count">0 samples collected</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cal-step">
+    <h3>Step 3 — Done</h3>
+    <p>Once calibration is complete, return to the main interface. Your calibration is stored for this session.</p>
+    <button class="btn-primary" id="btn-done" onclick="window.location='index.html'" disabled>
+      ✅ Go to SignBridge AI
+    </button>
+  </div>
+
+</div>
+
+<script>
+const API_BASE = window.location.origin.includes("file://") ? "http://localhost:5000" : window.location.origin;
+const SESSION_ID = `cal_${Date.now()}`;
+const DURATION = 30;    // seconds
+const INTERVAL = 500;   // ms between captures
+
+let stream = null;
+let capTimer = null;
+let countdownTimer = null;
+let samples = [];
+let elapsed = 0;
+
+async function startCalibration() {
+  document.getElementById("btn-start-cal").disabled = true;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+    const video = document.getElementById("cal-video");
+    video.srcObject = stream;
+    await video.play();
+    const cvs = document.getElementById("cal-canvas");
+    cvs.width = video.videoWidth; cvs.height = video.videoHeight;
+    beginCapture();
+  } catch(e) {
+    document.getElementById("cal-status").textContent = `Camera error: ${e.message}`;
+    document.getElementById("cal-status").className = "status-msg error";
+    document.getElementById("btn-start-cal").disabled = false;
+  }
+}
+
+function beginCapture() {
+  samples = [];
+  elapsed = 0;
+  document.getElementById("cal-status").textContent = "Capturing landmarks...";
+  document.getElementById("cal-status").className = "status-msg";
+
+  // Countdown
+  countdownTimer = setInterval(() => {
+    elapsed++;
+    const remaining = DURATION - elapsed;
+    document.getElementById("cal-timer").textContent = remaining;
+    updateProgressRing(elapsed / DURATION);
+    if (elapsed >= DURATION) {
+      clearInterval(countdownTimer);
+      clearInterval(capTimer);
+      finishCalibration();
+    }
+  }, 1000);
+
+  // Capture frames
+  capTimer = setInterval(captureFrame, INTERVAL);
+}
+
+async function captureFrame() {
+  const video = document.getElementById("cal-video");
+  if (!video || video.readyState < 2) return;
+
+  const tmp = document.createElement("canvas");
+  tmp.width = video.videoWidth; tmp.height = video.videoHeight;
+  tmp.getContext("2d").drawImage(video, 0, 0);
+  const b64 = tmp.toDataURL("image/jpeg", 0.7).split(",")[1];
+
+  try {
+    const res = await fetch(`${API_BASE}/api/detect`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ frame: b64 }),
+    });
+    const data = await res.json();
+    if (data.landmarks && data.landmarks.length === 21) {
+      samples.push(data.landmarks);
+      document.getElementById("sample-count").textContent = `${samples.length} samples collected`;
+    }
+  } catch(e) { /* ignore */ }
+}
+
+async function finishCalibration() {
+  document.getElementById("cal-timer").textContent = "✓";
+  stream?.getTracks().forEach(t => t.stop());
+
+  if (samples.length === 0) {
+    document.getElementById("cal-status").textContent = "No landmarks detected — ensure hand_landmark.tflite is loaded.";
+    document.getElementById("cal-status").className = "status-msg error";
+    document.getElementById("btn-done").disabled = false;
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/calibrate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ session_id: SESSION_ID, landmarks: samples }),
+    });
+    const data = await res.json();
+    if (data.status === "calibrated") {
+      document.getElementById("cal-status").textContent = `Calibrated! Scale=${data.scale?.toFixed(3) || "—"}`;
+      document.getElementById("cal-status").className = "status-msg success";
+      sessionStorage.setItem("sb_session_id", SESSION_ID);
+    }
+  } catch(e) {
+    document.getElementById("cal-status").textContent = "Calibration saved locally.";
+    document.getElementById("cal-status").className = "status-msg success";
+  }
+  document.getElementById("btn-done").disabled = false;
+}
+
+function updateProgressRing(progress) {
+  const circ = 2 * Math.PI * 36;
+  const offset = circ * (1 - Math.min(progress, 1));
+  document.getElementById("progress-circle").style.strokeDashoffset = offset;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,99 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://signbridge.ai/uscl/schema/v1",
+  "title": "Universal Sign Concept Layer (USCL) Entry",
+  "description": "Schema for a single USCL concept entry that maps one abstract meaning to multiple sign languages.",
+  "type": "object",
+  "required": ["uscl_id", "concept", "category", "mappings"],
+  "properties": {
+    "uscl_id": {
+      "type": "string",
+      "pattern": "^USCL_\\d{3,6}$",
+      "description": "Unique USCL concept identifier",
+      "examples": ["USCL_001", "USCL_042"]
+    },
+    "concept": {
+      "type": "string",
+      "description": "Human-readable concept name (lowercase, underscore-separated)",
+      "examples": ["pain", "help", "emergency"]
+    },
+    "description": {
+      "type": "string",
+      "description": "Plain-language description of the concept"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "medical_symptom",
+        "medical_action",
+        "body_part",
+        "basic_response",
+        "basic_need",
+        "emergency",
+        "greeting",
+        "other"
+      ]
+    },
+    "severity_level": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 5,
+      "description": "Clinical urgency (0=none, 5=critical). Used for triage prioritisation."
+    },
+    "mappings": {
+      "type": "object",
+      "description": "Per-sign-language mapping for this concept",
+      "properties": {
+        "isl": { "$ref": "#/definitions/SignMapping" },
+        "asl": { "$ref": "#/definitions/SignMapping" },
+        "bsl": { "$ref": "#/definitions/SignMapping" },
+        "jsl": { "$ref": "#/definitions/SignMapping" },
+        "auslan": { "$ref": "#/definitions/SignMapping" }
+      },
+      "required": ["isl"]
+    },
+    "synonyms": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "English synonyms / related words that map to this concept"
+    },
+    "created_at": { "type": "string", "format": "date" },
+    "updated_at": { "type": "string", "format": "date" }
+  },
+  "definitions": {
+    "SignMapping": {
+      "type": "object",
+      "required": ["token"],
+      "properties": {
+        "token": {
+          "type": "string",
+          "description": "Sign token identifier in the target sign language database"
+        },
+        "keypoint_file": {
+          "type": "string",
+          "description": "Relative path to the keypoint JSON animation file"
+        },
+        "video_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Optional reference video URL"
+        },
+        "reference": {
+          "type": "string",
+          "description": "External dictionary reference (e.g. 'ASL_SignBank_023')"
+        },
+        "hand": {
+          "type": "string",
+          "enum": ["right", "left", "both"],
+          "default": "right"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Mapping quality score (1.0 = verified by expert)"
+        }
+      }
+    }
+  }
+}
