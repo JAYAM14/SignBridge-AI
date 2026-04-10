@@ -188,18 +188,36 @@ class NLPMapper:
     # Keypoint loading
     # ------------------------------------------------------------------
 
+    # Valid token pattern: lowercase letters, digits, underscores only
+    _TOKEN_RE = re.compile(r'^[a-z][a-z0-9_]{0,63}$')
+
     def _load_keypoints(self, token: str) -> Optional[Dict]:
         """Load keypoint JSON for a sign token. Cached after first load."""
         if token in self._keypoint_cache:
             return self._keypoint_cache[token]
 
-        json_path = os.path.join(self._keypoints_dir, f"{token}.json")
-        if not os.path.exists(json_path):
-            logger.warning(f"Keypoint file not found: {json_path}")
+        # Validate token to prevent path traversal
+        if not self._TOKEN_RE.match(token):
+            logger.warning(f"Invalid token rejected: '{token}'")
+            return None
+
+        # Build path using only the validated token — safe against path traversal
+        json_filename = token + ".json"
+        json_path = os.path.join(self._keypoints_dir, json_filename)
+
+        # Ensure the resolved path is inside the keypoints directory
+        keypoints_dir_real = os.path.realpath(self._keypoints_dir)
+        json_path_real = os.path.realpath(json_path)
+        if not json_path_real.startswith(keypoints_dir_real + os.sep):
+            logger.warning(f"Path traversal attempt blocked for token: '{token}'")
+            return None
+
+        if not os.path.exists(json_path_real):
+            logger.warning(f"Keypoint file not found: {json_path_real}")
             return None
 
         try:
-            with open(json_path, "r") as f:
+            with open(json_path_real, "r") as f:
                 data = json.load(f)
             self._keypoint_cache[token] = data
             return data

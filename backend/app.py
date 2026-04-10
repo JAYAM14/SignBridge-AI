@@ -130,7 +130,7 @@ def detect():
 
     except Exception as exc:
         logger.exception("Error in /api/detect")
-        return jsonify({"error": str(exc)}), 500
+        return jsonify({"error": "Detection failed. Check server logs."}), 500
 
 
 @app.route("/api/speech", methods=["POST"])
@@ -162,7 +162,7 @@ def speech():
         return send_file(audio_path, mimetype="audio/mpeg", as_attachment=False)
     except Exception as exc:
         logger.exception("Error in /api/speech")
-        return jsonify({"error": str(exc)}), 500
+        return jsonify({"error": "Speech synthesis failed. Check server logs."}), 500
 
 
 @app.route("/api/mapper", methods=["POST"])
@@ -189,7 +189,7 @@ def mapper():
         return jsonify(result)
     except Exception as exc:
         logger.exception("Error in /api/mapper")
-        return jsonify({"error": str(exc)}), 500
+        return jsonify({"error": "Mapping failed. Check server logs."}), 500
 
 
 @app.route("/api/calibrate", methods=["POST"])
@@ -212,7 +212,7 @@ def calibrate():
         return jsonify({"status": "calibrated", "session_id": session_id})
     except Exception as exc:
         logger.exception("Error in /api/calibrate")
-        return jsonify({"error": str(exc)}), 500
+        return jsonify({"error": "Calibration failed. Check server logs."}), 500
 
 
 # ---------------------------------------------------------------------------
